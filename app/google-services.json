@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "829273185185",
+    "firebase_url": "https://varnafreeuniversitypost.firebaseio.com",
+    "project_id": "varnafreeuniversitypost",
+    "storage_bucket": "varnafreeuniversitypost.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829273185185:android:bf65de1a49c9cbe4edc9e0",
+        "android_client_info": {
+          "package_name": "com.example.androidpostsapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "829273185185-najdsuod7fkrkmbtoo03ocnv1jf7nkcq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.androidpostsapp",
+            "certificate_hash": "b937495f12a2e9d0e217068f49b2726568947039"
+          }
+        },
+        {
+          "client_id": "829273185185-ertd5t342o886lpcbtse0a7tf1btugop.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcEaWC0Ilxh2ow8AjY8KSWobNuhZdGuMQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "829273185185-ertd5t342o886lpcbtse0a7tf1btugop.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

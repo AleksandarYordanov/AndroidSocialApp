@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activities.EditProfileActivity">
+    <LinearLayout
+        android:id="@+id/rdit_profile_top_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@color/colorAccent"
+        android:gravity="center"
+        >
+        <ImageButton
+            android:id="@+id/edit_profile_btn_back"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_arrow_back_white_24dp"
+            android:background="@null"
+            android:layout_weight="1"/>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Edit Profile"
+            android:textColor="@color/whiteCardColor"
+            android:textSize="16sp"
+            android:layout_weight="4"
+            />
+        <ImageButton
+            android:id="@+id/edit_profile_btn_complete"
+
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_done_white_24dp"
+            android:background="@null"
+            android:layout_weight="1"/>
+
+
+    </LinearLayout>
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/edit_profile_picture_profile"
+        android:layout_width="144dp"
+        android:layout_height="144dp"
+        android:layout_marginTop="86dp"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/as" />
+
+    <TextView
+        android:id="@+id/edit_profile_txt_edit_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorAccent"
+        android:text="Edit Photo"
+        android:textSize="16sp"
+        android:layout_marginTop="12dp"
+        android:layout_below="@id/edit_profile_picture_profile"
+        android:layout_centerHorizontal="true"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="32dp"
+        android:layout_below="@id/edit_profile_txt_edit_photo"
+        android:orientation="vertical">
+
+
+
+
+        <EditText
+            android:id="@+id/edit_profile_txt_edit_gender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableLeft="@drawable/sex"
+            android:drawablePadding="8dp"
+            android:drawableTint="@color/colorAccent"
+            android:hint="Gender"
+            />
+
+        <EditText
+            android:id="@+id/edit_profile_txt_edit_username"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableLeft="@drawable/ic_person_black_24dp"
+            android:drawablePadding="12dp"
+            android:drawableTint="@color/colorAccent"
+            android:hint="Username"
+            />
+        <EditText
+            android:id="@+id/edit_profile_txt_edit_email"
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none"
+            android:text=""
+            android:drawableLeft="@drawable/ic_email_black_24dp"
+            android:drawablePadding="12dp"
+            android:drawableTint="@color/colorAccent"
+            android:hint="Email"
+            />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_cake_black_24dp"
+                    android:tint="@color/colorAccent"/>
+                <DatePicker
+                    android:id="@+id/edit_profile_datePicker_birthday"
+                    android:layout_width="match_parent"
+                    android:layout_height="68dp"
+                    android:datePickerMode="spinner"
+                    android:scrollIndicators="top"
+                    android:drawableTint="@color/colorAccent"
+                    android:calendarViewShown="false"/>
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+
+
+
+
+    </LinearLayout>
+
+
+
+</RelativeLayout>
+</layout>
