@@ -16,6 +16,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 
+import co.chatsdk.core.session.ChatSDK;
+
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener{
 
     ActivityLoginBinding binding ;
@@ -42,6 +44,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()){
+                                ChatSDK.auth().authenticate().subscribe();
                                 Intent intent = new Intent(LoginActivity.this,MainActivity.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                                 startActivity(intent);

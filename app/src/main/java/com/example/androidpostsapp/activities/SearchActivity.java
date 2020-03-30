@@ -3,19 +3,13 @@ package com.example.androidpostsapp.activities;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 
 import com.algolia.search.saas.AlgoliaException;
 import com.algolia.search.saas.Client;
@@ -24,10 +18,7 @@ import com.algolia.search.saas.Index;
 import com.algolia.search.saas.Query;
 import com.example.androidpostsapp.R;
 import com.example.androidpostsapp.databinding.ActivitySearchBinding;
-import com.example.androidpostsapp.models.User;
-import com.example.androidpostsapp.storage.GlideApp;
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
-import com.firebase.ui.database.FirebaseRecyclerOptions;
+import com.example.androidpostsapp.models.AppUser;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -47,7 +38,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends BaseActivity {
 
 
 
@@ -76,12 +67,12 @@ public class SearchActivity extends AppCompatActivity {
 
 
 
-        authenticate();
+        client = new Client("4WTJKK5KGA", "b93b3643dd212d0ed911be478c39f3e3");
+        index = client.getIndex("users");
 
         setBindingElements();
 
-        client = new Client("4WTJKK5KGA", "b93b3643dd212d0ed911be478c39f3e3");
-        index = client.getIndex("users");
+
 
 
 
@@ -93,7 +84,7 @@ public class SearchActivity extends AppCompatActivity {
         searchView();
         mReference = FirebaseDatabase.getInstance().getReference();
         mStorageRef = FirebaseStorage.getInstance().getReference();
-        itemSelectListenerMenue();
+        setActionBar(binding.bottomNavigation,R.id.search);
 
 
         binding.searchEditText.addTextChangedListener(new TextWatcher() {
@@ -112,14 +103,14 @@ public class SearchActivity extends AppCompatActivity {
                     public void requestCompleted(JSONObject content, AlgoliaException error) {
                         try {
                             JSONArray hits = content.getJSONArray("hits");
-                            List<User> list = new ArrayList<>();
+                            List<AppUser> list = new ArrayList<>();
                             for (int i = 0; i < hits.length(); i++) {
 
                                 JSONObject jsonObject = hits.getJSONObject(i);
-                                User user;
+                                AppUser appUser;
                                 Gson gson = new Gson();
-                                user= gson.fromJson(jsonObject.toString(),User.class);
-                                list.add(user);
+                                appUser = gson.fromJson(jsonObject.toString(), AppUser.class);
+                                list.add(appUser);
                             }
                             SearchUsersAdapter adapter = new SearchUsersAdapter(list,SearchActivity.this);
                             binding.recycleViewSearch.setAdapter(adapter);
@@ -148,39 +139,8 @@ public class SearchActivity extends AppCompatActivity {
 
 
 
-    private void itemSelectListenerMenue() {
-        //Set Search Selected
-        binding.bottomNavigation.setSelectedItemId(R.id.search);
-        //Perform Item Select Listener
-        binding.bottomNavigation.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                switch (item.getItemId()){
-                    case R.id.home:
-                        startActivity(new Intent(getApplicationContext(),MainActivity.class));
-                        overridePendingTransition(0,0);
-                        return true;
-                    case R.id.chat:
-                        startActivity(new Intent(getApplicationContext(), ChatHolderActivity.class));
-                        overridePendingTransition(0,0);
-                        return true;
-                    case R.id.profile:
-                        startActivity(new Intent(getApplicationContext(),ProfileActivity.class));
-                        overridePendingTransition(0,0);
-                        return true;
-                }
-                return false;
-            }
-        });
-    }
 
-    private void authenticate() {
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
 
-        String uid = mFirebaseUser.getUid();
-        System.out.println();
-    }
 
 
 }

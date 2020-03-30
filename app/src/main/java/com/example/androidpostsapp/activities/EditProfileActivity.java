@@ -15,21 +15,17 @@ import android.view.View;
 import android.widget.Toast;
 
 
-import com.algolia.search.saas.AlgoliaException;
 import com.algolia.search.saas.Client;
 import com.algolia.search.saas.Index;
-import com.bumptech.glide.Glide;
 import com.example.androidpostsapp.R;
 
 import com.example.androidpostsapp.databinding.ActivityEditProfileBinding;
-import com.example.androidpostsapp.models.User;
+import com.example.androidpostsapp.models.AppUser;
 
 
 import com.example.androidpostsapp.storage.GlideApp;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -41,7 +37,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.FileNotFoundException;
@@ -51,8 +46,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import co.chatsdk.core.dao.User;
+import co.chatsdk.core.session.ChatSDK;
+import co.chatsdk.firebase.wrappers.UserWrapper;
 
-public class EditProfileActivity extends AppCompatActivity implements View.OnClickListener {
+
+public class EditProfileActivity extends BaseActivity implements View.OnClickListener {
 
     private static final int RESULT_LOAD_IMG = 100;
     private ActivityEditProfileBinding binding;
@@ -70,7 +69,8 @@ public class EditProfileActivity extends AppCompatActivity implements View.OnCli
     boolean pictureSelected;
     Uri selectedImgUri;
 
-    private User curUser;
+    private AppUser curAppUser;
+  private  Map<String, Object> userUpdates;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +80,6 @@ public class EditProfileActivity extends AppCompatActivity implements View.OnCli
 
 
 
-        authenticate();
 
 
 
@@ -91,6 +90,7 @@ public class EditProfileActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void setBindingElements() {
+        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         reference = FirebaseDatabase.getInstance().getReference().child("Users").child(mFirebaseUser.getUid());
         mStorageRef = FirebaseStorage.getInstance().getReference();
 
@@ -100,21 +100,21 @@ public class EditProfileActivity extends AppCompatActivity implements View.OnCli
 
 
 
-        reference.addValueEventListener(new ValueEventListener() {
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
 
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                User user = dataSnapshot.getValue(User.class);
-                assert user != null;
-                curUser = user;
-                String[] bdayString = user.getBirthday().split("/");
+                AppUser appUser = dataSnapshot.getValue(AppUser.class);
+                assert appUser != null;
+                curAppUser = appUser;
+                String[] bdayString = appUser.getBirthday().split("/");
                 List<Integer> bdayInt = new ArrayList<>();
 
                 for (String s : bdayString) {
                     bdayInt.add(Integer.parseInt(s));
                 }
 
-                StorageReference fileRef = mStorageRef.child(user.getImageURL());
+                StorageReference fileRef = mStorageRef.child(appUser.getImageURL());
 
 
                 GlideApp.with(EditProfileActivity.this)
@@ -124,10 +124,10 @@ public class EditProfileActivity extends AppCompatActivity implements View.OnCli
 
 
 
-                binding.editProfileTxtEditUsername.setText(user.getUsername());
+                binding.editProfileTxtEditUsername.setText(appUser.getUsername());
                 binding.editProfileTxtEditEmail.setText(mFirebaseUser.getEmail());
 
-                binding.editProfileTxtEditGender.setText(user.getGender());
+                binding.editProfileTxtEditGender.setText(appUser.getGender());
                 binding.editProfileDatePickerBirthday.updateDate(bdayInt.get(2),bdayInt.get(1),bdayInt.get(0));
 
 
@@ -143,19 +143,6 @@ public class EditProfileActivity extends AppCompatActivity implements View.OnCli
     }
 
 
-
-    private void authenticate() {
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
-
-
-
-
-
-
-        String uid = mFirebaseUser.getUid();
-        System.out.println();
-    }
 
     @Override
     public void onClick(View v) {
@@ -182,57 +169,31 @@ public class EditProfileActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void updateUser() {
-          final Map<String, Object> userUpdates = new HashMap<>();
-        if (pictureSelected){
-//            String path = String.format("/profilePictures/%s/defaultAvatarFemale.jpg",mFirebaseUser.getUid());
-//            StorageReference picRef = mStorageRef.child(path);
-//            picRef.putFile(selectedImgUri);
+          userUpdates = new HashMap<>();
 
-         //   StorageReference fileRef = mStorageRef.child(String.format("%s%s",mFirebaseUser.getUid(),getFileExtention(selectedImgUri)));
+        if (pictureSelected){
             final String urlForImage = (String.format("profilePictures/%s/%d",mFirebaseUser.getUid(),System.currentTimeMillis()));
             StorageReference fileRef = mStorageRef.child(urlForImage);
 
-            userUpdates.put("imageURL", urlForImage);
             fileRef.putFile(selectedImgUri)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            String gender = binding.editProfileTxtEditGender.getText().toString();
-                            String username = binding.editProfileTxtEditUsername.getText().toString();
-                            String birthday = String.format("%d/%d/%d",binding.editProfileDatePickerBirthday.getDayOfMonth(),
-                                    binding.editProfileDatePickerBirthday.getMonth(),
-                                    binding.editProfileDatePickerBirthday.getYear());
-                            if(!curUser.getGender().equals(gender)){
-                                userUpdates.put("gender",gender);
-                            }
 
-                            if (!curUser.getUsername().equals(username)){
-                                userUpdates.put("username",username);
-                            }
-                            if (!curUser.getBirthday().equals(birthday)){
-                                userUpdates.put("birthday",username);
-                            }
+                            fileRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    String uristr = String.valueOf(uri);
+                                    User currentUser = ChatSDK.currentUser();
+                                    currentUser.setAvatarURL(String.valueOf(uri));
+                                    userUpdates.put("imageURL", urlForImage);
+                                    checkInfoFieldAndPopulateUserUpdates();
+                                    pushData();
 
-                            if (!userUpdates.isEmpty()) {
-                                reference.updateChildren(userUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
+                                }
+                            });
 
 
-                                        Client client = new Client("4WTJKK5KGA", "e8cc2912e9f24ae7bf639c150a8cb63c");
-                                        Index index = client.getIndex("users");
-
-                                        index.partialUpdateObjectAsync(new JSONObject(userUpdates), mFirebaseUser.getUid(), true, null);
-
-                                        Intent i = new Intent(EditProfileActivity.this,ProfileActivity.class);
-
-                                        startActivity(i);
-                                    }
-                                });
-
-
-
-                            }
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -241,6 +202,9 @@ public class EditProfileActivity extends AppCompatActivity implements View.OnCli
                             System.out.println(exception);
                         }
                     });
+        }else {
+            checkInfoFieldAndPopulateUserUpdates();
+            pushData();
         }
 
 
@@ -249,6 +213,68 @@ public class EditProfileActivity extends AppCompatActivity implements View.OnCli
 
 
 
+    }
+
+    private void pushData() {
+
+
+
+        if (!userUpdates.isEmpty()) {
+            this.reference.updateChildren(userUpdates).addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+
+                    if(userUpdates.containsKey("username")){
+                        User currentUser = ChatSDK.currentUser();
+                        currentUser.setName(userUpdates.get("username").toString());
+                        currentUser.update();
+
+                    }
+
+                    PushChatSDKUser();
+                    //Search Api Update
+                    Client client = new Client("4WTJKK5KGA", "e8cc2912e9f24ae7bf639c150a8cb63c");
+                    Index index = client.getIndex("users");
+                    index.partialUpdateObjectAsync(new JSONObject(userUpdates), mFirebaseUser.getUid(), true, null);
+
+
+                    finish();
+
+
+
+                }
+            });
+
+
+
+        }
+    }
+
+    private void PushChatSDKUser() {
+
+
+        UserWrapper userWrapper = new UserWrapper(ChatSDK.currentUser());
+        userWrapper.push().subscribe();
+    }
+
+    private void checkInfoFieldAndPopulateUserUpdates() {
+        String gender = binding.editProfileTxtEditGender.getText().toString();
+        String username = binding.editProfileTxtEditUsername.getText().toString();
+        String birthday = String.format("%d/%d/%d",binding.editProfileDatePickerBirthday.getDayOfMonth(),
+                binding.editProfileDatePickerBirthday.getMonth(),
+                binding.editProfileDatePickerBirthday.getYear());
+
+
+        if(!curAppUser.getGender().equals(gender)){
+            userUpdates.put("gender",gender);
+        }
+
+        if (!curAppUser.getUsername().equals(username)){
+            userUpdates.put("username",username);
+        }
+        if (!curAppUser.getBirthday().equals(birthday)){
+            userUpdates.put("birthday",username);
+        }
     }
 
     private void pickImageFromGallery() {

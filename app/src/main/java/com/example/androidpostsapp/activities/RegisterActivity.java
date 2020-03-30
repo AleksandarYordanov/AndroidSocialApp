@@ -3,24 +3,19 @@ package com.example.androidpostsapp.activities;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.DialogFragment;
 
-import android.app.DatePickerDialog;
-import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
-import com.algolia.search.saas.AlgoliaException;
 import com.algolia.search.saas.Client;
 import com.algolia.search.saas.Index;
-import com.algolia.search.saas.RequestOptions;
 import com.example.androidpostsapp.R;
 
 import com.example.androidpostsapp.databinding.ActivityRegisterBinding;
-import com.example.androidpostsapp.models.User;
+import com.example.androidpostsapp.models.AppUser;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -28,7 +23,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.gson.JsonArray;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -36,6 +30,12 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import co.chatsdk.core.dao.User;
+import co.chatsdk.core.dao.UserDao;
+import co.chatsdk.core.session.ChatSDK;
+import co.chatsdk.core.types.AccountDetails;
+import co.chatsdk.firebase.wrappers.UserWrapper;
 
 public class RegisterActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -92,20 +92,25 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
                                 reference = FirebaseDatabase.getInstance().getReference("Users").child(userid);
 
-                                final User user;
+                                final AppUser appUser;
                                 final HashMap<String, String> hashMap = new HashMap<>();
                                 hashMap.put("id", userid);
                                 hashMap.put("username", username);
                                 if (gender.equals("Female")){
                                     hashMap.put("imageURL", "profilePictures/defaultAvatarFemale.jpg");
-                                    user = new User(userid,username,"profilePictures/defaultAvatarFemale.jpg",birthday,gender);
+                                    appUser = new AppUser(userid,username,"profilePictures/defaultAvatarFemale.jpg",birthday,gender);
                                 }else {
                                     hashMap.put("imageURL", "profilePictures/defaultAvatarMale.jpg");
-                                    user = new User(userid,username,"profilePictures/defaultAvatarMale.jpg",birthday,gender);
+                                    appUser = new AppUser(userid,username,"profilePictures/defaultAvatarMale.jpg",birthday,gender);
                                 }
 
                                 hashMap.put("gender",gender);
                                 hashMap.put("birthday",birthday);
+
+
+
+
+                                ChatSDK.auth().authenticate().subscribe();
 
 
                                 reference.setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -120,6 +125,24 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                                                 userList.add(new JSONObject(hashMap));
 
                                                 index.addObjectsAsync(new JSONArray(userList),null);
+
+
+
+
+                                            User currentUser = ChatSDK.currentUser();
+                                            currentUser.setName(username);
+                                            if (gender.equals("Female")){
+                                                String femaleUrl = "https://firebasestorage.googleapis.com/v0/b/varnafreeuniversitypost.appspot.com/o/profilePictures%2FdefaultAvatarFemale.jpg?alt=media&token=034b1de7-ac28-4535-9777-ebcb49079233";
+                                                currentUser.setAvatarURL(femaleUrl);
+                                            }else {
+                                                String maleUrl = "https://firebasestorage.googleapis.com/v0/b/varnafreeuniversitypost.appspot.com/o/profilePictures%2FdefaultAvatarMale.jpg?alt=media&token=867a020d-bee7-499e-bc11-b95312e501eb";
+                                                currentUser.setAvatarURL(maleUrl);
+                                            }
+
+                                            currentUser.update();
+                                            UserWrapper userWrapper = new UserWrapper(currentUser);
+                                            userWrapper.push().subscribe();
+
 
                                             Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
                                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);

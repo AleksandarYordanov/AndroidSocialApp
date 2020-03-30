@@ -1,6 +1,6 @@
 package com.example.androidpostsapp.models;
 
-public class User {
+public class AppUser {
     private String id;
     private String username;
     private String imageURL;
@@ -8,7 +8,7 @@ public class User {
     private String gender;
 
 
-    public User(String id, String username, String imageURL, String birthday, String gender) {
+    public AppUser(String id, String username, String imageURL, String birthday, String gender) {
         this.id = id;
         this.username = username;
         this.imageURL = imageURL;
@@ -16,7 +16,7 @@ public class User {
         this.gender = gender;
     }
 
-    public User() {
+    public AppUser() {
     }
 
     public String getBirthday() {

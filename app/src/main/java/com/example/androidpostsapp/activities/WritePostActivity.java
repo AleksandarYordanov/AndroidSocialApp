@@ -11,8 +11,9 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.androidpostsapp.R;
 import com.example.androidpostsapp.databinding.ActivityWritePostBinding;
+import com.example.androidpostsapp.models.AppUser;
 import com.example.androidpostsapp.models.Post;
-import com.example.androidpostsapp.models.User;
+import com.example.androidpostsapp.storage.GlideApp;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -22,6 +23,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,14 +54,15 @@ public class WritePostActivity extends AppCompatActivity implements View.OnClick
         mDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                User user = dataSnapshot.getValue(User.class);
-                assert user != null;
-                binding.txtUsername.setText(user.getUsername());
-                if (user.getImageURL().equals("default")){
-                    binding.profilePictureWritePost.setImageResource(R.drawable.as);
-                }else {
-                    Glide.with(WritePostActivity.this).load(user.getImageURL()).into(binding.profilePictureWritePost);
-                }
+                AppUser appUser = dataSnapshot.getValue(AppUser.class);
+                assert appUser != null;
+                binding.txtUsername.setText(appUser.getUsername());
+
+                StorageReference fileRef = FirebaseStorage.getInstance().getReference().child(appUser.getImageURL());
+
+                GlideApp.with(WritePostActivity.this)
+                        .load(fileRef)
+                        .into(binding.profilePictureWritePost);
             }
 
             @Override

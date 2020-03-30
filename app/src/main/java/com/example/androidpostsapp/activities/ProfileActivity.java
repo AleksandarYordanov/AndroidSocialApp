@@ -15,15 +15,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.androidpostsapp.R;
+import com.example.androidpostsapp.models.AppUser;
 import com.example.androidpostsapp.models.Post;
 
 import com.example.androidpostsapp.databinding.ActivityProfileBinding;
-import com.example.androidpostsapp.models.User;
 import com.example.androidpostsapp.storage.GlideApp;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
-import com.firebase.ui.database.ObservableSnapshotArray;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -34,18 +32,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class ProfileActivity extends AppCompatActivity implements View.OnClickListener {
+public class ProfileActivity extends BaseActivity implements View.OnClickListener {
 
     ActivityProfileBinding binding;
 
@@ -66,33 +59,21 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-
-
         binding = DataBindingUtil.setContentView(this, R.layout.activity_profile);
 
-        authenticate();
+
 
         setBindingElements();
 
     }
 
-    private void authenticate() {
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
 
-
-
-
-
-
-        String uid = mFirebaseUser.getUid();
-        System.out.println();
-    }
 
     private void setBindingElements() {
 
         mReference = FirebaseDatabase.getInstance().getReference();
         mStorageRef = FirebaseStorage.getInstance().getReference();
+        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
 
 
@@ -100,16 +81,16 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
 
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                User user = dataSnapshot.getValue(User.class);
-                assert user != null;
+                AppUser appUser = dataSnapshot.getValue(AppUser.class);
+                assert appUser != null;
 
-                StorageReference fileRef = mStorageRef.child(user.getImageURL());
+                StorageReference fileRef = mStorageRef.child(appUser.getImageURL());
 
                 GlideApp.with(ProfileActivity.this)
                         .load(fileRef)
                         .into(binding.profilePictureProfile);
 
-                binding.profileUsername.setText(user.getUsername());
+                binding.profileUsername.setText(appUser.getUsername());
 
             }
             @Override
@@ -126,9 +107,10 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
      binding.recycleViewProfile.setAdapter(newAdapter());
 
       //Set Profile Selected
-      binding.bottomNavigation.setSelectedItemId(R.id.profile);
-      //Perform Item Select Listener
-      itemSelectListenerMenue();
+        setActionBar(binding.bottomNavigation,R.id.profile);
+
+
+
     }
 
     private RecyclerView.Adapter newAdapter() {
@@ -214,20 +196,20 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
                 uReference.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        User user = dataSnapshot.getValue(User.class);
-                        assert user != null;
+                        AppUser appUser = dataSnapshot.getValue(AppUser.class);
+                        assert appUser != null;
 
 
 
                         StorageReference mStorageRef = FirebaseStorage.getInstance().getReference();
-                        StorageReference fileRef = mStorageRef.child(user.getImageURL());
+                        StorageReference fileRef = mStorageRef.child(appUser.getImageURL());
 
 
                         GlideApp.with(ProfileActivity.this)
                                 .load(fileRef)
                                 .into(holder.profilePicture);
 
-                        holder.username.setText(user.getUsername());
+                        holder.username.setText(appUser.getUsername());
                     }
 
                     @Override
@@ -240,33 +222,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
         };
     }
 
-    private void itemSelectListenerMenue() {
-        binding.bottomNavigation.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.search:
-                        startActivity(new Intent(getApplicationContext(),SearchActivity.class));
-                        overridePendingTransition(0,0);
-                        return true;
-                    case R.id.chat:
-                        startActivity(new Intent(getApplicationContext(), ChatHolderActivity.class));
-                        overridePendingTransition(0,0);
-                        return true;
-                    case R.id.home:
-                        startActivity(new Intent(getApplicationContext(),MainActivity.class));
-                        overridePendingTransition(0,0);
-                        return true;
-                    case R.id.logOut:
-                        mFirebaseAuth.signOut();
-                        startActivity(new Intent(getApplicationContext(), MainActivity.class));
-                        overridePendingTransition(0, 0);
-                        return true;
-                }
-                return false;
-            }
-        });
-    }
+
 
     @Override
     public void onClick(View v) {

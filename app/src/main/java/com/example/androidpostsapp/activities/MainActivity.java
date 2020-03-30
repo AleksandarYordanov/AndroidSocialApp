@@ -1,7 +1,8 @@
 package com.example.androidpostsapp.activities;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+
+import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -10,13 +11,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.androidpostsapp.R;
-import com.example.androidpostsapp.models.User;
+import com.example.androidpostsapp.models.AppUser;
 
 import com.example.androidpostsapp.databinding.ActivityMainBinding;
 import com.example.androidpostsapp.models.Post;
@@ -35,13 +37,25 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import co.chatsdk.core.dao.User;
+import co.chatsdk.core.dao.UserMetaValue;
+import co.chatsdk.core.session.ChatSDK;
+import co.chatsdk.core.session.Configuration;
+import co.chatsdk.firebase.FirebaseNetworkAdapter;
+import co.chatsdk.firebase.file_storage.FirebaseFileStorageModule;
+import co.chatsdk.firebase.wrappers.ThreadWrapper;
+import co.chatsdk.firebase.wrappers.UserWrapper;
+import co.chatsdk.ui.manager.BaseInterfaceAdapter;
+import io.reactivex.CompletableObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
      ActivityMainBinding binding;
 
@@ -53,41 +67,78 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+//        try {
+//            // Create a new configuration
+//            Configuration.Builder builder = new Configuration.Builder();
+//
+//            // Perform any other configuration steps (optional)
+//            builder.firebaseRootPath("prod");
+//            // Initialize the Chat SDK
+//            ChatSDK.initialize(getApplicationContext(), builder.build(), FirebaseNetworkAdapter.class, BaseInterfaceAdapter.class);
+//
+//            // File storage is needed for profile image upload and image messages
+//            FirebaseFileStorageModule.activate();
+//
+//            // Activate any other modules you need.
+//            // ...
+//
+//
+//        } catch (Exception e) {
+//            // Handle any exceptions
+//            e.printStackTrace();
+//        }
+
         super.onCreate(savedInstanceState);
+
+
+
+
+
         setContentView(R.layout.activity_main);
-
         mFirebaseAuth = FirebaseAuth.getInstance();
+        this.mFirebaseUser = mFirebaseAuth.getCurrentUser();
 
-
-
-        checkAndLaunchSingnInActivity();
-
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
+        if (mFirebaseUser == null) {
+            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        }
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
 
-
         mDatabaseReference = FirebaseDatabase.getInstance().getReference();
+
+
         setBindingElements();
 
 
 
 
-    }
 
-    private void checkAndLaunchSingnInActivity() {
 
-            if (mFirebaseAuth.getCurrentUser() == null) {
-                Intent intent = new Intent(this, LoginActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                this.startActivity(intent);
-                finish();
 
-        }
+  // User user = ChatSDK.currentUser();
+  // user.setName("name");
+  // user.update();
+  // ChatSDK.core().pushUser().subscribe();
+
+
+        System.out.println();
+      //  ChatSDK.ui().startEditProfileActivity(getApplicationContext(),ChatSDK.currentUserID());
+
+
+
+
+
+
+
+
+
     }
 
     private void setBindingElements() {
@@ -101,21 +152,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         //Set Home Selected
-        binding.bottomNavigation.setSelectedItemId(R.id.home);
+        setActionBar(binding.bottomNavigation,R.id.home);
+
         //Perform Item Select Listener
-        îtemSelectListenerMenue();
+        String uid = mFirebaseUser.getUid();
 
-
-
-        mDatabaseReference.child("Users").child(mFirebaseUser.getUid()).addValueEventListener(new ValueEventListener() {
+        mDatabaseReference.child("Users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
 
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                User user = dataSnapshot.getValue(User.class);
+                AppUser appUser = dataSnapshot.getValue(AppUser.class);
 
 
-                if (user != null) {
-                    StorageReference fileRef = FirebaseStorage.getInstance().getReference().child(user.getImageURL());
+                if (appUser != null) {
+                    StorageReference fileRef = FirebaseStorage.getInstance().getReference().child(appUser.getImageURL());
 
                     GlideApp.with(MainActivity.this)
                             .load(fileRef)
@@ -125,47 +175,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                    mDatabaseReference.removeEventListener(this);
             }});
 
 
     }
-
-
-    private void îtemSelectListenerMenue() {
-        binding.bottomNavigation.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.search:
-                        startActivity(new Intent(getApplicationContext(), SearchActivity.class));
-                        overridePendingTransition(0, 0);
-                        return true;
-                    case R.id.chat:
-                        startActivity(new Intent(getApplicationContext(), ChatHolderActivity.class));
-                        overridePendingTransition(0, 0);
-                        return true;
-                    case R.id.profile:
-                        startActivity(new Intent(getApplicationContext(), ProfileActivity.class));
-                        overridePendingTransition(0, 0);
-                        return true;
-                    case R.id.logOut:
-
-                        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-
-                        finish();
-                        mFirebaseAuth.signOut();
-                        return true;
-
-                }
-                return false;
-            }
-        });
-    }
-
-
 
     @Override
     public void onClick(View v) {
@@ -255,18 +269,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                uReference.addValueEventListener(new ValueEventListener() {
                    @Override
                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                       User user = dataSnapshot.getValue(User.class);
-                       assert user != null;
+                       AppUser appUser = dataSnapshot.getValue(AppUser.class);
+                       assert appUser != null;
 
                        StorageReference mStorageRef = FirebaseStorage.getInstance().getReference();
-                       StorageReference fileRef = mStorageRef.child(user.getImageURL());
+                       StorageReference fileRef = mStorageRef.child(appUser.getImageURL());
 
 
                        GlideApp.with(MainActivity.this)
                                .load(fileRef)
                                .into(holder.profilePicture);
 
-                       holder.username.setText(user.getUsername());
+                       holder.username.setText(appUser.getUsername());
                    }
 
                    @Override
